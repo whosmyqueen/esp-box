@@ -34,7 +34,8 @@ esp_err_t settings_factory_reset(void)
 esp_err_t settings_read_parameter_from_nvs(void)
 {
     esp_err_t ret = nvs_open_from_partition(uf2_nvs_partition, uf2_nvs_namespace, NVS_READONLY, &my_handle);
-    if (ESP_ERR_NVS_NOT_FOUND == ret) {
+    if (ESP_ERR_NVS_NOT_FOUND == ret)
+    {
         ESP_LOGI(TAG, "Credentials not found");
         goto err;
     }
@@ -45,7 +46,8 @@ esp_err_t settings_read_parameter_from_nvs(void)
     // Read SSID
     len = sizeof(g_sys_param.ssid);
     ret = nvs_get_str(my_handle, "ssid", g_sys_param.ssid, &len);
-    if (ret != ESP_OK || len == 0) {
+    if (ret != ESP_OK || len == 0)
+    {
         ESP_LOGI(TAG, "No SSID found");
         goto err;
     }
@@ -53,7 +55,8 @@ esp_err_t settings_read_parameter_from_nvs(void)
     // Read password
     len = sizeof(g_sys_param.password);
     ret = nvs_get_str(my_handle, "password", g_sys_param.password, &len);
-    if (ret != ESP_OK || len == 0) {
+    if (ret != ESP_OK || len == 0)
+    {
         ESP_LOGI(TAG, "No Password found");
         goto err;
     }
@@ -61,7 +64,8 @@ esp_err_t settings_read_parameter_from_nvs(void)
     // Read key
     len = sizeof(g_sys_param.key);
     ret = nvs_get_str(my_handle, "ChatGPT_key", g_sys_param.key, &len);
-    if (ret != ESP_OK || len == 0) {
+    if (ret != ESP_OK || len == 0)
+    {
         ESP_LOGI(TAG, "No OpenAI key found");
         goto err;
     }
@@ -69,8 +73,27 @@ esp_err_t settings_read_parameter_from_nvs(void)
     // Read url
     len = sizeof(g_sys_param.url);
     ret = nvs_get_str(my_handle, "Base_url", g_sys_param.url, &len);
-    if (ret != ESP_OK || len == 0) {
+    if (ret != ESP_OK || len == 0)
+    {
         ESP_LOGI(TAG, "No OpenAI Base url found");
+        goto err;
+    }
+
+    // Read realtime url
+    len = sizeof(g_sys_param.realtimeUrl);
+    ret = nvs_get_str(my_handle, "Realtime_url", g_sys_param.realtimeUrl, &len);
+    if (ret != ESP_OK || len == 0)
+    {
+        ESP_LOGI(TAG, "No Realtime url found");
+        goto err;
+    }
+
+    // Read senseflow key
+    len = sizeof(g_sys_param.realtimeUrl);
+    ret = nvs_get_str(my_handle, "Senseflow_key", g_sys_param.senseflowKey, &len);
+    if (ret != ESP_OK || len == 0)
+    {
+        ESP_LOGI(TAG, "No Senseflow key found");
         goto err;
     }
 
@@ -80,10 +103,13 @@ esp_err_t settings_read_parameter_from_nvs(void)
     ESP_LOGI(TAG, "stored password:%s", g_sys_param.password);
     ESP_LOGI(TAG, "stored OpenAI:%s", g_sys_param.key);
     ESP_LOGI(TAG, "stored Base URL:%s", g_sys_param.url);
+    ESP_LOGI(TAG, "stored Realtime URL:%s", g_sys_param.realtimeUrl);
+    ESP_LOGI(TAG, "stored Senseflow KEY:%s", g_sys_param.senseflowKey);
     return ESP_OK;
 
 err:
-    if (my_handle) {
+    if (my_handle)
+    {
         nvs_close(my_handle);
     }
     settings_factory_reset();

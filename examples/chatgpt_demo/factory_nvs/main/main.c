@@ -19,8 +19,8 @@
 #define NVS_MODIFIED_BIT BIT0
 #define SSID_SIZE 32
 #define PASSWORD_SIZE 64
-#define KEY_SIZE 1024
-#define URL_SIZE 1024
+#define KEY_SIZE 165
+#define URL_SIZE 165
 
 static const char *TAG = "ChatGPT_NVS";
 
@@ -125,26 +125,26 @@ void app_main(void)
         err = nvs_get_str(my_handle, "Realtime_url", realtimeUrl, &buf_len_long);
         if (err != ESP_OK || buf_len_long == 0)
         {
-            ESP_ERROR_CHECK(nvs_set_str(my_handle, "Realtime_url", CONFIG_OPENAI_URL));
+            ESP_ERROR_CHECK(nvs_set_str(my_handle, "Realtime_url", CONFIG_REALTIME_URL));
             ESP_ERROR_CHECK(nvs_commit(my_handle));
             ESP_LOGI(TAG, "no realtime url, give a init value to key");
         }
         else
         {
-            ESP_LOGI(TAG, "stored realtime url:%s", url);
+            ESP_LOGI(TAG, "stored realtime url:%s", realtimeUrl);
         }
 
         buf_len_long = sizeof(senseflowKey);
         err = nvs_get_str(my_handle, "Senseflow_key", senseflowKey, &buf_len_long);
         if (err != ESP_OK || buf_len_long == 0)
         {
-            ESP_ERROR_CHECK(nvs_set_str(my_handle, "Senseflow_key", CONFIG_OPENAI_URL));
+            ESP_ERROR_CHECK(nvs_set_str(my_handle, "Senseflow_key", CONFIG_SENSEFLOW_KEY));
             ESP_ERROR_CHECK(nvs_commit(my_handle));
             ESP_LOGI(TAG, "no senseflow key, give a init value to key");
         }
         else
         {
-            ESP_LOGI(TAG, "stored senseflow key:%s", url);
+            ESP_LOGI(TAG, "stored senseflow key:%s", senseflowKey);
         }
     }
     nvs_close(my_handle);
@@ -234,7 +234,7 @@ void app_main(void)
                 nvs_close(my_handle);
                 return;
             }
-            ESP_LOGD(TAG, "Realtime_url", url);
+            ESP_LOGD(TAG, "Realtime_url", realtimeUrl);
 
             buf_len_long = sizeof(senseflowKey);
             err = nvs_get_str(my_handle, "Senseflow_key", senseflowKey, &buf_len_long);
@@ -244,7 +244,7 @@ void app_main(void)
                 nvs_close(my_handle);
                 return;
             }
-            ESP_LOGD(TAG, "Senseflow_key", url);
+            ESP_LOGD(TAG, "Senseflow_key", senseflowKey);
             nvs_close(my_handle);
         }
 
