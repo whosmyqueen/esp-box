@@ -16,11 +16,11 @@
 #include "bsp/esp-bsp.h"
 #include "esp_ota_ops.h"
 
-#define NVS_MODIFIED_BIT          BIT0
+#define NVS_MODIFIED_BIT BIT0
 #define SSID_SIZE 32
 #define PASSWORD_SIZE 64
-#define KEY_SIZE 165
-#define URL_SIZE 64
+#define KEY_SIZE 1024
+#define URL_SIZE 1024
 
 static const char *TAG = "ChatGPT_NVS";
 
@@ -48,59 +48,103 @@ void app_main(void)
     char password[PASSWORD_SIZE] = {0};
     char key[KEY_SIZE] = {0};
     char url[URL_SIZE] = {0};
+    char realtimeUrl[URL_SIZE] = {0};
+    char senseflowKey[URL_SIZE] = {0};
 
     s_event_group = xEventGroupCreate();
 
     // Initialize NVS
     err = nvs_flash_init();
-    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND) {
+    if (err == ESP_ERR_NVS_NO_FREE_PAGES || err == ESP_ERR_NVS_NEW_VERSION_FOUND)
+    {
         ESP_ERROR_CHECK(nvs_flash_erase());
         err = nvs_flash_init();
     }
     ESP_ERROR_CHECK(err);
 
     err = nvs_open_from_partition(uf2_nvs_partition, uf2_nvs_namespace, NVS_READWRITE, &my_handle);
-    if (err != ESP_OK) {
+    if (err != ESP_OK)
+    {
         printf("Error (%s) opening NVS handle!\n", esp_err_to_name(err));
-    } else {
+    }
+    else
+    {
         buf_len_long = sizeof(ssid);
         err = nvs_get_str(my_handle, "ssid", ssid, &buf_len_long);
-        if (err != ESP_OK || buf_len_long == 0) {
+        if (err != ESP_OK || buf_len_long == 0)
+        {
             ESP_ERROR_CHECK(nvs_set_str(my_handle, "ssid", CONFIG_ESP_WIFI_SSID));
             ESP_ERROR_CHECK(nvs_commit(my_handle));
             ESP_LOGI(TAG, "no ssid, give a init value to nvs");
-        } else {
+        }
+        else
+        {
             ESP_LOGI(TAG, "stored ssid:%s", ssid);
         }
 
         buf_len_long = sizeof(password);
         err = nvs_get_str(my_handle, "password", password, &buf_len_long);
-        if (err != ESP_OK || buf_len_long == 0) {
+        if (err != ESP_OK || buf_len_long == 0)
+        {
             ESP_ERROR_CHECK(nvs_set_str(my_handle, "password", CONFIG_ESP_WIFI_PASSWORD));
             ESP_ERROR_CHECK(nvs_commit(my_handle));
             ESP_LOGI(TAG, "no password, give a init value to nvs");
-        } else {
+        }
+        else
+        {
             ESP_LOGI(TAG, "stored password:%s", password);
         }
 
         buf_len_long = sizeof(key);
         err = nvs_get_str(my_handle, "ChatGPT_key", key, &buf_len_long);
-        if (err != ESP_OK || buf_len_long == 0) {
+        if (err != ESP_OK || buf_len_long == 0)
+        {
             ESP_ERROR_CHECK(nvs_set_str(my_handle, "ChatGPT_key", CONFIG_OPENAI_API_KEY));
             ESP_ERROR_CHECK(nvs_commit(my_handle));
             ESP_LOGI(TAG, "no ChatGPT key, give a init value to key");
-        } else {
+        }
+        else
+        {
             ESP_LOGI(TAG, "stored ChatGPT key:%s", key);
         }
 
         buf_len_long = sizeof(url);
         err = nvs_get_str(my_handle, "Base_url", url, &buf_len_long);
-        if (err != ESP_OK || buf_len_long == 0) {
+        if (err != ESP_OK || buf_len_long == 0)
+        {
             ESP_ERROR_CHECK(nvs_set_str(my_handle, "Base_url", CONFIG_OPENAI_URL));
             ESP_ERROR_CHECK(nvs_commit(my_handle));
             ESP_LOGI(TAG, "no base url, give a init value to key");
-        } else {
+        }
+        else
+        {
             ESP_LOGI(TAG, "stored base url:%s", url);
+        }
+
+        buf_len_long = sizeof(realtimeUrl);
+        err = nvs_get_str(my_handle, "Realtime_url", realtimeUrl, &buf_len_long);
+        if (err != ESP_OK || buf_len_long == 0)
+        {
+            ESP_ERROR_CHECK(nvs_set_str(my_handle, "Realtime_url", CONFIG_OPENAI_URL));
+            ESP_ERROR_CHECK(nvs_commit(my_handle));
+            ESP_LOGI(TAG, "no realtime url, give a init value to key");
+        }
+        else
+        {
+            ESP_LOGI(TAG, "stored realtime url:%s", url);
+        }
+
+        buf_len_long = sizeof(senseflowKey);
+        err = nvs_get_str(my_handle, "Senseflow_key", senseflowKey, &buf_len_long);
+        if (err != ESP_OK || buf_len_long == 0)
+        {
+            ESP_ERROR_CHECK(nvs_set_str(my_handle, "Senseflow_key", CONFIG_OPENAI_URL));
+            ESP_ERROR_CHECK(nvs_commit(my_handle));
+            ESP_LOGI(TAG, "no senseflow key, give a init value to key");
+        }
+        else
+        {
+            ESP_LOGI(TAG, "stored senseflow key:%s", url);
         }
     }
     nvs_close(my_handle);
@@ -121,20 +165,22 @@ void app_main(void)
         .double_buffer = 0,
         .flags = {
             .buff_dma = true,
-        }
-    };
+        }};
     bsp_display_start_with_config(&cfg);
     bsp_display_backlight_on();
     ui_init();
 
-    while (1) {
+    while (1)
+    {
         EventBits_t bits = xEventGroupWaitBits(s_event_group, NVS_MODIFIED_BIT,
                                                pdTRUE, pdFALSE, portMAX_DELAY);
 
-        if (bits & NVS_MODIFIED_BIT) {
+        if (bits & NVS_MODIFIED_BIT)
+        {
             esp_err_t err = nvs_open_from_partition(uf2_nvs_partition, uf2_nvs_namespace, NVS_READONLY, &my_handle);
 
-            if (err != ESP_OK) {
+            if (err != ESP_OK)
+            {
                 ESP_LOGE(TAG, "Failed to open NVS partition: %s", esp_err_to_name(err));
                 // Handle the error or take appropriate action
                 return;
@@ -142,7 +188,8 @@ void app_main(void)
 
             size_t buf_len_long = sizeof(ssid);
             err = nvs_get_str(my_handle, "ssid", ssid, &buf_len_long);
-            if (err != ESP_OK) {
+            if (err != ESP_OK)
+            {
                 ESP_LOGE(TAG, "Failed to read 'ssid' from NVS: %s", esp_err_to_name(err));
                 nvs_close(my_handle);
                 return;
@@ -151,7 +198,8 @@ void app_main(void)
 
             buf_len_long = sizeof(password);
             err = nvs_get_str(my_handle, "password", password, &buf_len_long);
-            if (err != ESP_OK) {
+            if (err != ESP_OK)
+            {
                 ESP_LOGE(TAG, "Failed to read 'password' from NVS: %s", esp_err_to_name(err));
                 nvs_close(my_handle);
                 return;
@@ -160,7 +208,8 @@ void app_main(void)
 
             buf_len_long = sizeof(key);
             err = nvs_get_str(my_handle, "ChatGPT_key", key, &buf_len_long);
-            if (err != ESP_OK) {
+            if (err != ESP_OK)
+            {
                 ESP_LOGE(TAG, "Failed to read 'ChatGPT_key' from NVS: %s", esp_err_to_name(err));
                 nvs_close(my_handle);
                 return;
@@ -169,16 +218,36 @@ void app_main(void)
 
             buf_len_long = sizeof(url);
             err = nvs_get_str(my_handle, "Base_url", url, &buf_len_long);
-            if (err != ESP_OK) {
+            if (err != ESP_OK)
+            {
                 ESP_LOGE(TAG, "Failed to read 'BASE_url' from NVS: %s", esp_err_to_name(err));
                 nvs_close(my_handle);
                 return;
             }
             ESP_LOGD(TAG, "BASE url", url);
+
+            buf_len_long = sizeof(realtimeUrl);
+            err = nvs_get_str(my_handle, "Realtime_url", realtimeUrl, &buf_len_long);
+            if (err != ESP_OK)
+            {
+                ESP_LOGE(TAG, "Failed to read 'Realtime_url' from NVS: %s", esp_err_to_name(err));
+                nvs_close(my_handle);
+                return;
+            }
+            ESP_LOGD(TAG, "Realtime_url", url);
+
+            buf_len_long = sizeof(senseflowKey);
+            err = nvs_get_str(my_handle, "Senseflow_key", senseflowKey, &buf_len_long);
+            if (err != ESP_OK)
+            {
+                ESP_LOGE(TAG, "Failed to read 'Senseflow_key' from NVS: %s", esp_err_to_name(err));
+                nvs_close(my_handle);
+                return;
+            }
+            ESP_LOGD(TAG, "Senseflow_key", url);
             nvs_close(my_handle);
         }
 
         vTaskDelay(pdMS_TO_TICKS(1000));
     }
-
 }
